@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="te">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>మన ఊరు యాప్ - లాగిన్ & కాల్</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; margin: 0 auto; }
+        h2 { color: #2e7d32; text-align: center; margin-bottom: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 16px; }
+        button { width: 100%; padding: 14px; background-color: #2e7d32; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button:hover { background-color: #1b5e20; }
+        .call-btn { background-color: #d32f2f; margin-top: 15px; }
+        .call-btn:hover { background-color: #b71c1c; }
+        #dashboard, #otpSection { display: none; } /* ముందుగా వీటిని దాచాము */
+    </style>
+</head>
+<body>
+
+    <!-- 1. లాగిన్ పేజీ -->
+    <div id="loginPage" class="card">
+        <h2>లాగిన్ అవ్వండి</h2>
+        <p style="text-align:center; color:#555; font-size:14px;">మీ మొబైల్ నంబర్ ఎంటర్ చేయండి</p>
+        
+        <div id="recaptcha-container"></div> <!-- ఇది Firebase సెక్యూరిటీ కోసం -->
+        
+        <input type="tel" id="mobileNumber" placeholder="+91 ఎంటర్ చేయండి (ఉదా: +919876543210)">
+        <button id="sendOtpBtn" onclick="sendOTP()">OTP పంపండి</button>
+
+        <div id="otpSection">
+            <input type="number" id="otpCode" placeholder="మీకు వచ్చిన OTP ఎంటర్ చేయండి">
+            <button onclick="verifyOTP()">లాగిన్ కన్ఫర్మ్ చేయండి</button>
+        </div>
+    </div>
+
+    <!-- 2. డ్యాష్‌బోర్డ్ (కాల్ పేజీ) -->
+    <div id="dashboard" class="card">
+        <h2>డ్యాష్‌బోర్డ్</h2>
+        <p style="text-align:center; color:#333;">మీరు లాగిన్ అయిన నంబర్: <br><strong id="userNum" style="color:#2e7d32; font-size:18px;"></strong></p>
+        <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+        
+        <h3 style="text-align:center;">కస్టమర్ కి కాల్ చేయండి</h3>
+        <p style="text-align:center; color:#666; font-size:12px;">(మీ నంబర్ కస్టమర్‌కి కనిపించదు)</p>
+        
+        <input type="tel" id="targetNumber" placeholder="కస్టమర్ మొబైల్ నంబర్ ఎంటర్ చేయండి">
+        <button class="call-btn" onclick="makeMaskedCall()">📞 కాల్ చేయండి</button>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // మీరు పంపిన Firebase కాన్ఫిగరేషన్
+        const firebaseConfig = {
+            apiKey: "AIzaSyBaC9WvzR6_98TqimcqwPiCwlDXliXkP30",
+            authDomain: "vishnu-priya-finance.firebaseapp.com",
+            projectId: "vishnu-priya-finance",
+            storageBucket: "vishnu-priya-finance.firebasestorage.app",
+            messagingSenderId: "917604826030",
+            appId: "1:917604826030:web:94f30189210a2ea71ce63f",
+            measurementId: "G-EVK56X0Z1Q"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        window.confirmationResult = null;
+        let loggedInNumber = ""; // లాగిన్ అయిన నంబర్ ఇందులో స్టోర్ అవుతుంది
+
+        // 1. OTP పంపే ఫంక్షన్
+        window.sendOTP = function() {
+            const number = document.getElementById("mobileNumber").value;
+            if(number.length < 10) {
+                alert("దయచేసి సరైన నంబర్ ఎంటర్ చేయండి (+91 తో పాటుగా)");
+                return;
+            }
+
+            // ఫైర్‌బేస్ రీక్యాప్చా
+            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
+            
+            signInWithPhoneNumber(auth, number, window.recaptchaVerifier)
+                .then((result) => {
+                    window.confirmationResult = result;
+                    document.getElementById("otpSection").style.display = "block";
+                    document.getElementById("sendOtpBtn").style.display = "none";
+                    document.getElementById("mobileNumber").disabled = true;
+                    alert("OTP విజయవంతంగా పంపబడింది!");
+                }).catch((error) => {
+                    console.error(error);
+                    alert("OTP పంపడంలో తప్పు జరిగింది. మళ్లీ ప్రయత్నించండి.");
+                });
+        }
+
+        // 2. OTP వెరిఫై చేసే ఫంక్షన్
+        window.verifyOTP = function() {
+            const code = document.getElementById("otpCode").value;
+            window.confirmationResult.confirm(code).then((result) => {
+                const user = result.user;
+                loggedInNumber = user.phoneNumber; // ఇక్కడ లాగిన్ అయిన నంబర్ తీసుకుంటాం
+                
+                // లాగిన్ సక్సెస్ అయితే డ్యాష్‌బోర్డ్ ఓపెన్ అవుతుంది
+                document.getElementById("loginPage").style.display = "none";
+                document.getElementById("dashboard").style.display = "block";
+                document.getElementById("userNum").innerText = loggedInNumber; // నంబర్ ని డ్యాష్‌బోర్డ్ లో చూపిస్తాం
+                
+            }).catch((error) => {
+                alert("మీరు ఎంటర్ చేసిన OTP తప్పు!");
+            });
+        }
+
+        // 3. కాల్ చేసే ఫంక్షన్ (Masked Call)
+        window.makeMaskedCall = function() {
+            const targetNum = document.getElementById("targetNumber").value;
+            
+            if(targetNum === "") {
+                alert("దయచేసి కస్టమర్ నంబర్ ఎంటర్ చేయండి");
+                return;
+            }
+            
+            // ఇక్కడే Exotel లేదా Ozonetel లాంటి సర్వర్ కి కమాండ్ వెళుతుంది
+            alert("కాల్ కనెక్ట్ అవుతోంది...\n\nముందుగా మీ నంబర్ (" + loggedInNumber + ") కి కాల్ వస్తుంది.\nమీరు లిఫ్ట్ చేయగానే కస్టమర్ (" + targetNum + ") కి కాల్ వెళుతుంది.\n\n(కస్టమర్ కి మీ నంబర్ కనిపించదు)");
+            
+            // TODO: ఇక్కడ Exotel API కి సంబంధించిన కోడ్ యాడ్ చేయాలి
+        }
+    </script>
+</body>
+</html>
