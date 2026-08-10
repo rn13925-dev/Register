@@ -13,7 +13,7 @@
         button:hover { background-color: #1b5e20; }
         .call-btn { background-color: #d32f2f; margin-top: 15px; }
         .call-btn:hover { background-color: #b71c1c; }
-        #dashboard, #otpSection { display: none; } /* ముందుగా వీటిని దాచాము */
+        #dashboard, #otpSection { display: none; }
     </style>
 </head>
 <body>
@@ -23,9 +23,9 @@
         <h2>లాగిన్ అవ్వండి</h2>
         <p style="text-align:center; color:#555; font-size:14px;">మీ మొబైల్ నంబర్ ఎంటర్ చేయండి</p>
         
-        <div id="recaptcha-container"></div> <!-- ఇది Firebase సెక్యూరిటీ కోసం -->
+        <div id="recaptcha-container"></div>
         
-        <input type="tel" id="mobileNumber" placeholder="+91 ఎంటర్ చేయండి (ఉదా: +919876543210)">
+        <input type="tel" id="mobileNumber" placeholder="నంబర్ ఎంటర్ చేయండి (ఉదా: 9876543210)">
         <button id="sendOtpBtn" onclick="sendOTP()">OTP పంపండి</button>
 
         <div id="otpSection">
@@ -52,7 +52,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // మీరు పంపిన Firebase కాన్ఫిగరేషన్
         const firebaseConfig = {
             apiKey: "AIzaSyBaC9WvzR6_98TqimcqwPiCwlDXliXkP30",
             authDomain: "vishnu-priya-finance.firebaseapp.com",
@@ -66,50 +65,59 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         window.confirmationResult = null;
-        let loggedInNumber = ""; // లాగిన్ అయిన నంబర్ ఇందులో స్టోర్ అవుతుంది
+        let loggedInNumber = "";
 
-        // 1. OTP పంపే ఫంక్షన్
         window.sendOTP = function() {
-            const number = document.getElementById("mobileNumber").value;
-            if(number.length < 10) {
-                alert("దయచేసి సరైన నంబర్ ఎంటర్ చేయండి (+91 తో పాటుగా)");
+            let number = document.getElementById("mobileNumber").value.trim();
+            
+            // నంబర్ ఫార్మాట్ ఆటోమేటిక్ గా సెట్ చేయడానికి
+            if (!number.startsWith("+")) {
+                if(number.startsWith("91") && number.length === 12) {
+                    number = "+" + number; // ఒకవేళ 919014770191 అని ఇస్తే + యాడ్ చేస్తుంది
+                } else if(number.length === 10) {
+                    number = "+91" + number; // ఒకవేళ 9014770191 అని ఇస్తే +91 యాడ్ చేస్తుంది
+                }
+            }
+
+            if(number.length !== 13) {
+                alert("దయచేసి సరైన 10 అంకెల మొబైల్ నంబర్ ఎంటర్ చేయండి.");
                 return;
             }
 
-            // ఫైర్‌బేస్ రీక్యాప్చా
-            window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
-            
-            signInWithPhoneNumber(auth, number, window.recaptchaVerifier)
-                .then((result) => {
-                    window.confirmationResult = result;
-                    document.getElementById("otpSection").style.display = "block";
-                    document.getElementById("sendOtpBtn").style.display = "none";
-                    document.getElementById("mobileNumber").disabled = true;
-                    alert("OTP విజయవంతంగా పంపబడింది!");
-                }).catch((error) => {
-                    console.error(error);
-                    alert("OTP పంపడంలో తప్పు జరిగింది. మళ్లీ ప్రయత్నించండి.");
-                });
+            try {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { 'size': 'invisible' });
+                
+                signInWithPhoneNumber(auth, number, window.recaptchaVerifier)
+                    .then((result) => {
+                        window.confirmationResult = result;
+                        document.getElementById("otpSection").style.display = "block";
+                        document.getElementById("sendOtpBtn").style.display = "none";
+                        document.getElementById("mobileNumber").disabled = true;
+                        alert("OTP విజయవంతంగా పంపబడింది!");
+                    }).catch((error) => {
+                        // ఇక్కడే మనకు అసలు ఎర్రర్ ఏంటో తెలుస్తుంది
+                        alert("అసలు ఎర్రర్ కోడ్: " + error.code + " \n\nవివరాలు: " + error.message);
+                    });
+            } catch(e) {
+                alert("కోడ్ లో ఎర్రర్: " + e.message);
+            }
         }
 
-        // 2. OTP వెరిఫై చేసే ఫంక్షన్
         window.verifyOTP = function() {
             const code = document.getElementById("otpCode").value;
             window.confirmationResult.confirm(code).then((result) => {
                 const user = result.user;
-                loggedInNumber = user.phoneNumber; // ఇక్కడ లాగిన్ అయిన నంబర్ తీసుకుంటాం
+                loggedInNumber = user.phoneNumber;
                 
-                // లాగిన్ సక్సెస్ అయితే డ్యాష్‌బోర్డ్ ఓపెన్ అవుతుంది
                 document.getElementById("loginPage").style.display = "none";
                 document.getElementById("dashboard").style.display = "block";
-                document.getElementById("userNum").innerText = loggedInNumber; // నంబర్ ని డ్యాష్‌బోర్డ్ లో చూపిస్తాం
+                document.getElementById("userNum").innerText = loggedInNumber;
                 
             }).catch((error) => {
-                alert("మీరు ఎంటర్ చేసిన OTP తప్పు!");
+                alert("మీరు ఎంటర్ చేసిన OTP తప్పు లేదా గడువు ముగిసింది!");
             });
         }
 
-        // 3. కాల్ చేసే ఫంక్షన్ (Masked Call)
         window.makeMaskedCall = function() {
             const targetNum = document.getElementById("targetNumber").value;
             
@@ -118,10 +126,7 @@
                 return;
             }
             
-            // ఇక్కడే Exotel లేదా Ozonetel లాంటి సర్వర్ కి కమాండ్ వెళుతుంది
             alert("కాల్ కనెక్ట్ అవుతోంది...\n\nముందుగా మీ నంబర్ (" + loggedInNumber + ") కి కాల్ వస్తుంది.\nమీరు లిఫ్ట్ చేయగానే కస్టమర్ (" + targetNum + ") కి కాల్ వెళుతుంది.\n\n(కస్టమర్ కి మీ నంబర్ కనిపించదు)");
-            
-            // TODO: ఇక్కడ Exotel API కి సంబంధించిన కోడ్ యాడ్ చేయాలి
         }
     </script>
 </body>
