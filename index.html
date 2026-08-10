@@ -23,13 +23,14 @@
         <h2>లాగిన్ అవ్వండి</h2>
         <p style="text-align:center; color:#555; font-size:14px;">మీ మొబైల్ నంబర్ ఎంటర్ చేయండి</p>
         
+        <!-- ఫైర్‌బేస్ సెక్యూరిటీ కోసం -->
         <div id="recaptcha-container"></div>
         
-        <input type="tel" id="mobileNumber" placeholder="నంబర్ ఎంటర్ చేయండి (ఉదా: 9876543210)">
+        <input type="tel" id="mobileNumber" placeholder="నంబర్ ఎంటర్ చేయండి (ఉదా: 9014770191)">
         <button id="sendOtpBtn" onclick="sendOTP()">OTP పంపండి</button>
 
         <div id="otpSection">
-            <input type="number" id="otpCode" placeholder="మీకు వచ్చిన OTP ఎంటర్ చేయండి">
+            <input type="number" id="otpCode" placeholder="మీకు వచ్చిన 6-అంకెల OTP ఎంటర్ చేయండి">
             <button onclick="verifyOTP()">లాగిన్ కన్ఫర్మ్ చేయండి</button>
         </div>
     </div>
@@ -41,7 +42,7 @@
         <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
         
         <h3 style="text-align:center;">కస్టమర్ కి కాల్ చేయండి</h3>
-        <p style="text-align:center; color:#666; font-size:12px;">(మీ నంబర్ కస్టమర్‌కి కనిపించదు)</p>
+        <p style="text-align:center; color:#666; font-size:12px;">(మీ నంబర్ కస్టమర్‌కి కనిపించదు, +1 అమెరికా నంబర్ కనిపిస్తుంది)</p>
         
         <input type="tel" id="targetNumber" placeholder="కస్టమర్ మొబైల్ నంబర్ ఎంటర్ చేయండి">
         <button class="call-btn" onclick="makeMaskedCall()">📞 కాల్ చేయండి</button>
@@ -52,6 +53,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
+        // మీ ఫైర్‌బేస్ కాన్ఫిగరేషన్
         const firebaseConfig = {
             apiKey: "AIzaSyBaC9WvzR6_98TqimcqwPiCwlDXliXkP30",
             authDomain: "vishnu-priya-finance.firebaseapp.com",
@@ -67,15 +69,16 @@
         window.confirmationResult = null;
         let loggedInNumber = "";
 
+        // 1. OTP పంపే ఫంక్షన్
         window.sendOTP = function() {
             let number = document.getElementById("mobileNumber").value.trim();
             
-            // నంబర్ ఫార్మాట్ ఆటోమేటిక్ గా సెట్ చేయడానికి
+            // నంబర్ కి ఆటోమేటిక్ గా +91 యాడ్ చేయడం
             if (!number.startsWith("+")) {
                 if(number.startsWith("91") && number.length === 12) {
-                    number = "+" + number; // ఒకవేళ 919014770191 అని ఇస్తే + యాడ్ చేస్తుంది
+                    number = "+" + number; 
                 } else if(number.length === 10) {
-                    number = "+91" + number; // ఒకవేళ 9014770191 అని ఇస్తే +91 యాడ్ చేస్తుంది
+                    number = "+91" + number; 
                 }
             }
 
@@ -95,20 +98,21 @@
                         document.getElementById("mobileNumber").disabled = true;
                         alert("OTP విజయవంతంగా పంపబడింది!");
                     }).catch((error) => {
-                        // ఇక్కడే మనకు అసలు ఎర్రర్ ఏంటో తెలుస్తుంది
-                        alert("అసలు ఎర్రర్ కోడ్: " + error.code + " \n\nవివరాలు: " + error.message);
+                        alert("ఎర్రర్ కోడ్: " + error.code + " \n\nవివరాలు: " + error.message);
                     });
             } catch(e) {
                 alert("కోడ్ లో ఎర్రర్: " + e.message);
             }
         }
 
+        // 2. OTP వెరిఫై చేసే ఫంక్షన్
         window.verifyOTP = function() {
             const code = document.getElementById("otpCode").value;
             window.confirmationResult.confirm(code).then((result) => {
                 const user = result.user;
                 loggedInNumber = user.phoneNumber;
                 
+                // లాగిన్ అయ్యాక డాష్‌బోర్డ్ చూపించడం
                 document.getElementById("loginPage").style.display = "none";
                 document.getElementById("dashboard").style.display = "block";
                 document.getElementById("userNum").innerText = loggedInNumber;
@@ -118,15 +122,55 @@
             });
         }
 
+        // 3. Twilio ద్వారా కాల్ చేసే ఫంక్షన్
         window.makeMaskedCall = function() {
-            const targetNum = document.getElementById("targetNumber").value;
+            let targetNum = document.getElementById("targetNumber").value.trim();
             
             if(targetNum === "") {
                 alert("దయచేసి కస్టమర్ నంబర్ ఎంటర్ చేయండి");
                 return;
             }
-            
-            alert("కాల్ కనెక్ట్ అవుతోంది...\n\nముందుగా మీ నంబర్ (" + loggedInNumber + ") కి కాల్ వస్తుంది.\nమీరు లిఫ్ట్ చేయగానే కస్టమర్ (" + targetNum + ") కి కాల్ వెళుతుంది.\n\n(కస్టమర్ కి మీ నంబర్ కనిపించదు)");
+
+            // కస్టమర్ నంబర్ కి +91 యాడ్ చేయడం
+            if (!targetNum.startsWith("+")) {
+                if(targetNum.length === 10) {
+                    targetNum = "+91" + targetNum;
+                }
+            }
+
+            // మీ Twilio వివరాలు
+            const twilioSid = "ACb00354afd6f370748eabf41f8736348f";
+            const twilioToken = "6fb77fe685f1122e9e464c377872667e";
+            const twilioNumber = "+17372212163";
+
+            const callData = new URLSearchParams();
+            callData.append("To", targetNum); 
+            callData.append("From", twilioNumber); 
+            callData.append("Url", "http://demo.twilio.com/docs/voice.xml"); // డెమో వాయిస్ లింక్
+
+            alert("కాల్ కనెక్ట్ అవుతోంది... దయచేసి వేచి ఉండండి.");
+
+            // Twilio సర్వర్ కి కాల్ రిక్వెస్ట్ పంపడం
+            fetch("https://api.twilio.com/2010-04-01/Accounts/" + twilioSid + "/Calls.json", {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(twilioSid + ':' + twilioToken),
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: callData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.error_message) {
+                    alert("ఎర్రర్: " + data.error_message + "\n\n(గమనిక: ఫ్రీ అకౌంట్ కాబట్టి, ఈ నంబర్ Twilio 'Verified Caller IDs' లో యాడ్ చేసి ఉంటేనే కాల్ వెళుతుంది)");
+                } else {
+                    alert("కాల్ విజయవంతంగా వెళ్ళింది! \n\nకస్టమర్ కి మీ నంబర్ కనిపించదు.");
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                alert("కాల్ వెళ్లడంలో ఏదో సాంకేతిక లోపం జరిగింది.");
+            });
         }
     </script>
 </body>
