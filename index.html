@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPFC - Telecaller Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            /* Common Colors */
+            --brand-color: #5B4EFA; 
+            --brand-gradient: linear-gradient(135deg, #5B4EFA 0%, #3b28cc 100%);
+            --accent-color: #E2A03F; 
+            --bg-color: #F4F7FE;
+            --card-bg: #ffffff;
+            --text-main: #2B3674;
+            --text-muted: #A3AED0;
+            --border-color: #E2E8F0;
+            --error-color: #ef4444;
+
+            /* Dashboard Specific Colors */
+            --sidebar-bg: #5B4EFA; 
+            --sidebar-hover: #4a3ee0;
+            --c-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            --c-red: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            --c-purple: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            --c-blue: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            --c-yellow: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            --c-cyan: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            --c-orange: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg-color); height: 100vh; overflow: hidden; }
+
+        /* =========================================
+           1. LOGIN SECTION STYLES
+           ========================================= */
+        #loginSection { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
+        .login-wrapper { display: flex; width: 900px; max-width: 95%; background: var(--card-bg); border-radius: 24px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05); overflow: hidden; }
+        
+        .login-left { width: 45%; background: var(--brand-gradient); padding: 50px 40px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; color: white; position: relative; overflow: hidden; }
+        .login-left::before { content: ''; position: absolute; top: -50px; left: -50px; width: 200px; height: 200px; background: rgba(255,255,255,0.1); border-radius: 50%; }
+        .login-left::after { content: ''; position: absolute; bottom: -80px; right: -50px; width: 250px; height: 250px; background: rgba(255,255,255,0.05); border-radius: 50%; }
+        .brand-logo { font-size: 32px; font-weight: 800; color: var(--accent-color); margin-bottom: 20px; z-index: 1; }
+        .brand-title { font-size: 28px; font-weight: 700; margin-bottom: 15px; line-height: 1.3; z-index: 1; }
+        .brand-subtitle { font-size: 14px; font-weight: 400; opacity: 0.8; line-height: 1.6; z-index: 1; }
+
+        .login-right { width: 55%; padding: 60px 50px; display: flex; flex-direction: column; justify-content: center; }
+        .login-header { margin-bottom: 35px; }
+        .login-header h2 { font-size: 26px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; }
+        .login-header p { font-size: 14px; color: var(--text-muted); font-weight: 500; }
+        .input-group { margin-bottom: 20px; position: relative; }
+        .input-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 8px; }
+        .input-group input { width: 100%; padding: 14px 15px 14px 45px; border: 1.5px solid var(--border-color); border-radius: 12px; font-size: 14px; font-weight: 500; outline: none; transition: 0.3s; background: #fafafa; }
+        .input-group input:focus { border-color: var(--brand-color); background: #ffffff; box-shadow: 0 0 0 4px rgba(91, 78, 250, 0.1); }
+        .input-group i { position: absolute; bottom: 15px; left: 16px; font-size: 16px; color: var(--text-muted); transition: 0.3s; }
+        .input-group input:focus + i { color: var(--brand-color); }
+        #errorMsg { color: var(--error-color); font-size: 13px; font-weight: 600; margin-bottom: 20px; display: none; background: #fee2e2; padding: 10px 15px; border-radius: 8px; border: 1px solid #fca5a5; }
+        
+        .btn-login { width: 100%; padding: 15px; background: var(--brand-color); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-login:hover { background: var(--brand-gradient); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(91, 78, 250, 0.4); }
+        .btn-login:disabled { background: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* =========================================
+           2. DASHBOARD SECTION STYLES
+           ========================================= */
+        #dashboardSection { display: none; width: 100%; height: 100%; flex-direction: row; }
+        
+        /* Sidebar */
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); color: white; display: flex; flex-direction: column; transition: 0.3s; z-index: 100; overflow-y: auto; }
+        .sidebar::-webkit-scrollbar { display: none; }
+        .brand { padding: 25px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .brand h2 { font-size: 20px; font-weight: 800; letter-spacing: 1px; margin-bottom: 5px; }
+        .brand p { font-size: 11px; color: rgba(255,255,255,0.7); text-transform: uppercase; letter-spacing: 0.5px; }
+        .menu-list { padding: 15px 10px; flex: 1; }
+        .menu-item { display: flex; align-items: center; padding: 12px 15px; color: rgba(255,255,255,0.8); text-decoration: none; border-radius: 10px; margin-bottom: 5px; font-size: 14px; font-weight: 500; transition: 0.3s; cursor: pointer; }
+        .menu-item i { width: 24px; font-size: 16px; margin-right: 10px; text-align: center; }
+        .menu-item:hover { background-color: var(--sidebar-hover); color: white; }
+        .menu-item.active { background-color: white; color: var(--sidebar-bg); font-weight: 700; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .header { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.02); z-index: 10; position: sticky; top: 0; }
+        .header-title { font-size: 22px; font-weight: 700; color: var(--text-main); }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        .user-profile { display: flex; align-items: center; gap: 10px; background: var(--bg-color); padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: 700; color: var(--text-main); }
+        .user-profile i { color: var(--sidebar-bg); }
+        .btn-logout { background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5; padding: 6px 15px; border-radius: 20px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-logout:hover { background: #fecaca; }
+
+        .dashboard-container { padding: 30px; }
+        
+        .filter-bar { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); margin-bottom: 25px; }
+        .filter-group { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text-main); }
+        .month-select { padding: 8px 15px; border: 1px solid var(--border-color); border-radius: 8px; font-size: 14px; font-weight: 600; color: var(--text-main); outline: none; background: var(--bg-color); cursor: pointer; }
+        .data-badge { background: #e0e7ff; color: #4338ca; padding: 6px 15px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+
+        .section-title { font-size: 15px; font-weight: 700; color: var(--text-main); margin-bottom: 15px; margin-top: 10px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 25px; }
+
+        .stat-card { border-radius: 16px; padding: 20px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: transform 0.2s; display: flex; flex-direction: column; justify-content: space-between; min-height: 110px; }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 12px 25px rgba(0,0,0,0.1); }
+        .stat-title { font-size: 13px; font-weight: 600; opacity: 0.9; margin-bottom: 10px; }
+        .stat-value { font-size: 28px; font-weight: 800; display: flex; align-items: baseline; gap: 5px; }
+        .stat-sub { font-size: 14px; font-weight: 600; opacity: 0.9; }
+        .stat-icon { position: absolute; right: -10px; bottom: -15px; font-size: 70px; opacity: 0.15; transform: rotate(-10deg); }
+
+        .bg-green { background: var(--c-green); }
+        .bg-red { background: var(--c-red); }
+        .bg-purple { background: var(--c-purple); }
+        .bg-blue { background: var(--c-blue); }
+        .bg-yellow { background: var(--c-yellow); }
+        .bg-cyan { background: var(--c-cyan); }
+        .bg-orange { background: var(--c-orange); }
+
+        /* Loader */
+        #pageLoader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .spinner { font-size: 40px; color: var(--brand-color); margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+    <!-- OVERLAY LOADER -->
+    <div id="pageLoader">
+        <i class="fas fa-circle-notch fa-spin spinner"></i>
+        <h3 id="loaderText" style="color:var(--text-main); font-size: 16px;">Verifying Secure Connection...</h3>
+    </div>
+
+    <!-- =========================================
+         1. LOGIN SECTION 
+         ========================================= -->
+    <div id="loginSection" style="display: none;">
+        <div class="login-wrapper">
+            <div class="login-left">
+                <div class="brand-logo">VPFC</div>
+                <h1 class="brand-title">Management<br>Workspace</h1>
+                <p class="brand-subtitle">Secure access portal for Telecallers and System Administrators. Manage assignments, track field operations, and monitor live performance.</p>
+            </div>
+            <div class="login-right">
+                <div class="login-header">
+                    <h2>Welcome Back</h2>
+                    <p>Please sign in to access your dashboard</p>
+                </div>
+                <div id="errorMsg"></div>
+                <form id="loginForm">
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="email" placeholder="Enter your email address" required>
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="password" placeholder="Enter your password" required>
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <button type="submit" class="btn-login" id="loginBtn">
+                        Sign In <i class="fas fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         2. DASHBOARD SECTION 
+         ========================================= -->
+    <div id="dashboardSection">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="brand">
+                <h2>VPFC</h2>
+                <p>Telecaller Panel</p>
+            </div>
+            <div class="menu-list">
+                <a href="#" class="menu-item active" onclick="showDashboard()"><i class="fas fa-home"></i> <span>Dashboard</span></a>
+                <a href="assign-accounts.html" class="menu-item"><i class="fas fa-tasks"></i> <span>Assign Accounts</span></a>
+                <a href="complaint-box.html" class="menu-item"><i class="fas fa-exclamation-circle"></i> <span>Complaint Box</span></a>
+                <a href="tc-visit-status.html" class="menu-item"><i class="fas fa-clipboard-check"></i> <span>Visit Status</span></a>
+                <a href="emp-performance.html" class="menu-item"><i class="fas fa-chart-line"></i> <span>Emp. Performance</span></a>
+                <a href="branch-report.html" class="menu-item"><i class="fas fa-building"></i> <span>Branch Report</span></a>
+                <a href="overall-performance.html" class="menu-item"><i class="fas fa-chart-pie"></i> <span>Overall Performance</span></a>
+                <a href="attendance-log.html" class="menu-item"><i class="fas fa-user-clock"></i> <span>Attendance Log</span></a>
+                <a href="employee-register.html" class="menu-item"><i class="fas fa-users"></i> <span>Employee Register</span></a>
+                <a href="employee-biodata.html" class="menu-item"><i class="fas fa-address-card"></i> <span>Employee Bio Data</span></a>
+                <a href="live-location.html" class="menu-item"><i class="fas fa-map-marker-alt"></i> <span>Live Location</span></a>
+                <a href="camp-history.html" class="menu-item"><i class="fas fa-campground"></i> <span>Camp History</span></a>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="header">
+                <div class="header-title">Dashboard</div>
+                <div class="header-right">
+                    <div class="user-profile">
+                        <i class="fas fa-user-circle"></i> <span id="displayUserName">Telecaller</span>
+                    </div>
+                    <button class="btn-logout" onclick="handleLogout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                </div>
+            </div>
+
+            <div class="dashboard-container">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <i class="far fa-calendar-alt"></i> Select Data Month:
+                        <input type="month" id="monthFilter" class="month-select" onchange="fetchDashboardData()">
+                    </div>
+                    <div class="data-badge" id="dataBadgeText">Showing data for Current Month</div>
+                </div>
+
+                <div class="section-title">Live Field Status (Today)</div>
+                <div class="grid-2">
+                    <div class="stat-card bg-green">
+                        <div class="stat-title">Online Employees</div>
+                        <div class="stat-value" id="valOnline">0</div>
+                        <i class="fas fa-wifi stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-red">
+                        <div class="stat-title">Offline Employees</div>
+                        <div class="stat-value" id="valOffline">0</div>
+                        <i class="fas fa-plane-slash stat-icon"></i>
+                    </div>
+                </div>
+
+                <div class="section-title">Assignments</div>
+                <div class="grid-3">
+                    <div class="stat-card bg-purple">
+                        <div class="stat-title">Assigned Branches</div>
+                        <div class="stat-value" id="valBranches">0</div>
+                        <i class="fas fa-code-branch stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-blue">
+                        <div class="stat-title">Assigned Employees</div>
+                        <div class="stat-value" id="valEmployees">0</div>
+                        <i class="fas fa-user-tie stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-yellow">
+                        <div class="stat-title">Total Accounts</div>
+                        <div class="stat-value" id="valTotalAccounts">0</div>
+                        <i class="fas fa-wallet stat-icon"></i>
+                    </div>
+                </div>
+
+                <div class="section-title">Visits Data (Unique HP)</div>
+                <div class="grid-3">
+                    <div class="stat-card bg-cyan">
+                        <div class="stat-title">Visited Accounts</div>
+                        <div class="stat-value" id="valVisited">0</div>
+                        <i class="fas fa-check-double stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-orange">
+                        <div class="stat-title">Remaining Visits</div>
+                        <div class="stat-value" id="valRemaining">0</div>
+                        <i class="fas fa-hourglass-half stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-green">
+                        <div class="stat-title">Visit Percentage</div>
+                        <div class="stat-value" id="valPercentage">0<span class="stat-sub">%</span></div>
+                        <i class="fas fa-percentage stat-icon"></i>
+                    </div>
+                </div>
+
+                <div class="section-title">Complaints Status</div>
+                <div class="grid-3">
+                    <div class="stat-card bg-red">
+                        <div class="stat-title">Raised Complaints</div>
+                        <div class="stat-value" id="valCompRaised">0</div>
+                        <i class="fas fa-bullhorn stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-green">
+                        <div class="stat-title">Cleared Complaints</div>
+                        <div class="stat-value" id="valCompCleared">0</div>
+                        <i class="fas fa-check-circle stat-icon"></i>
+                    </div>
+                    <div class="stat-card bg-yellow">
+                        <div class="stat-title">Pending Complaints</div>
+                        <div class="stat-value" id="valCompPending">0</div>
+                        <i class="fas fa-clock stat-icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // IMPORTANT: Use your fresh Firebase config here
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvjFcKKiu4OMmQckYXMTejdBJh9tC6TjM",
+            authDomain: "sri-vishnu-priya-finance-c591f.firebaseapp.com",
+            databaseURL: "https://sri-vishnu-priya-finance-c591f-default-rtdb.firebaseio.com",
+            projectId: "sri-vishnu-priya-finance-c591f",
+            storageBucket: "sri-vishnu-priya-finance-c591f.firebasestorage.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getDatabase(app);
+        
+        window.auth = auth;
+        window.firebaseSignOut = signOut;
+        window.tcName = "Telecaller";
+
+        // Today's Date Configuration
+        const todayObj = new Date();
+        const rYear = todayObj.getFullYear();
+        const rMonth = String(todayObj.getMonth() + 1).padStart(2, '0');
+        const rDate = String(todayObj.getDate()).padStart(2, '0');
+        const realMonthStr = `${rYear}-${rMonth}`;
+        const realDateStr = `${realMonthStr}-${rDate}`;
+
+        document.getElementById('monthFilter').value = realMonthStr;
+
+        // AUTHENTICATION LISTENER
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // User is Logged In -> Show Dashboard, Hide Login
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('dashboardSection').style.display = 'flex';
+                
+                const tcId = user.email.split('@')[0];
+                try {
+                    const snap = await get(child(ref(db), `employees/${tcId}`));
+                    if (snap.exists() && snap.val().name) {
+                        window.tcName = snap.val().name;
+                    } else {
+                        window.tcName = tcId.toUpperCase();
+                    }
+                } catch(e) {}
+                
+                document.getElementById('displayUserName').innerText = `${window.tcName} (TC)`;
+                window.fetchDashboardData();
+            } else {
+                // User is Logged Out -> Show Login, Hide Dashboard
+                document.getElementById('pageLoader').style.display = 'none';
+                document.getElementById('dashboardSection').style.display = 'none';
+                document.getElementById('loginSection').style.display = 'flex';
+            }
+        });
+
+        // LOGIN FORM SUBMISSION
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+            errorMsg.style.display = 'none';
+
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    // Success! onAuthStateChanged will handle the screen switch automatically
+                    btn.innerHTML = 'Sign In <i class="fas fa-arrow-right"></i>';
+                    btn.disabled = false;
+                })
+                .catch((error) => {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Sign In <i class="fas fa-arrow-right"></i>';
+                    errorMsg.style.display = 'block';
+                    errorMsg.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Incorrect Email or Password.`;
+                });
+        });
+
+        // DASHBOARD DATA FETCH LOGIC
+        window.fetchDashboardData = async function() {
+            document.getElementById('pageLoader').style.display = 'flex';
+            document.getElementById('loaderText').innerText = 'Fetching Live Data...';
+            
+            const selMonth = document.getElementById('monthFilter').value;
+            document.getElementById('dataBadgeText').innerText = `Showing data for ${selMonth}`;
+
+            let tEmployees = 0; let tBranches = new Set();
+            let onlineCount = 0; let offlineCount = 0;
+            let tAccounts = 0; let visitedAccounts = new Set();
+            let compRaised = 0; let compCleared = 0; let compPending = 0;
+
+            try {
+                const empSnap = await get(child(ref(db), `employees`));
+                if (empSnap.exists()) {
+                    const empData = empSnap.val();
+                    for(const key in empData) {
+                        if(empData[key].role !== 'Admin' && empData[key].role !== 'Telecaller') {
+                            tEmployees++;
+                            if(empData[key].branch) tBranches.add(empData[key].branch);
+                        }
+                    }
+                }
+
+                if (selMonth === realMonthStr) {
+                    const attSnap = await get(child(ref(db), `attendance`));
+                    if (attSnap.exists()) {
+                        const allAtt = attSnap.val();
+                        for(const eId in allAtt) {
+                            if(allAtt[eId][realMonthStr] && allAtt[eId][realMonthStr][realDateStr]) {
+                                const todayRec = allAtt[eId][realMonthStr][realDateStr];
+                                if(todayRec.onlineTime && !todayRec.offlineTime) {
+                                    onlineCount++;
+                                }
+                            }
+                        }
+                    }
+                    offlineCount = tEmployees - onlineCount;
+                    if(offlineCount < 0) offlineCount = 0;
+                } else {
+                    onlineCount = "N/A"; offlineCount = "N/A"; 
+                }
+
+                const assignSnap = await get(child(ref(db), `assignments`));
+                if(assignSnap.exists()){
+                    const assignData = assignSnap.val();
+                    for(const eId in assignData){
+                        if(assignData[eId][selMonth] && assignData[eId][selMonth].details) {
+                            tAccounts += Object.keys(assignData[eId][selMonth].details).length;
+                        }
+                    }
+                }
+
+                const visitsSnap = await get(child(ref(db), `visits/${selMonth}`));
+                if(visitsSnap.exists()) {
+                    const visitsData = visitsSnap.val();
+                    for(const vId in visitsData) {
+                        visitedAccounts.add(visitsData[vId].hp); 
+                    }
+                }
+                const vCount = visitedAccounts.size;
+                const remainCount = tAccounts > vCount ? tAccounts - vCount : 0;
+                let vPercent = tAccounts > 0 ? ((vCount / tAccounts) * 100).toFixed(1) : 0;
+
+                const compSnap = await get(child(ref(db), `complaints`));
+                if(compSnap.exists()) {
+                    const compData = compSnap.val();
+                    for(const eId in compData) {
+                        for(const cId in compData[eId]) {
+                            const c = compData[eId][cId];
+                            if(c.date && c.date.startsWith(selMonth)) {
+                                compRaised++;
+                                if(c.status === 'CLEARED') compCleared++;
+                                else compPending++;
+                            }
+                        }
+                    }
+                }
+
+                document.getElementById('valOnline').innerText = onlineCount;
+                document.getElementById('valOffline').innerText = offlineCount;
+                document.getElementById('valBranches').innerText = tBranches.size;
+                document.getElementById('valEmployees').innerText = tEmployees;
+                document.getElementById('valTotalAccounts').innerText = tAccounts;
+                document.getElementById('valVisited').innerText = vCount;
+                document.getElementById('valRemaining').innerText = remainCount;
+                document.getElementById('valPercentage').innerHTML = `${vPercent}<span class="stat-sub">%</span>`;
+                document.getElementById('valCompRaised').innerText = compRaised;
+                document.getElementById('valCompCleared').innerText = compCleared;
+                document.getElementById('valCompPending').innerText = compPending;
+
+            } catch (e) {
+                console.error("Dashboard Fetch Error: ", e);
+            } finally {
+                document.getElementById('pageLoader').style.display = 'none';
+            }
+        }
+    </script>
+    <script>
+        function handleLogout() {
+            if(confirm("Are you sure you want to logout?")) {
+                window.firebaseSignOut(window.auth).then(() => { 
+                    // No need to redirect, listener will catch it and show login form automatically!
+                });
+            }
+        }
+    </script>
+</body>
+</html>
