@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sri Vishnu Priya Finance - Login</title>
+    <!-- Icons kosam FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* --- THEME STYLES (Common for all pages) --- */
+        :root {
+            --primary-bg: #f0f2f5; 
+            --brand-color: #0B3B60; 
+            --brand-gradient: linear-gradient(135deg, #0B3B60 0%, #1a5276 100%);
+            --accent-color: #E2A03F; 
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --success: #27ae60;
+            --danger: #e74c3c;
+            --border-color: #e0e0e0;
+            --input-bg: #fafafa;
+        }
+
+        [data-theme="light"] {
+            --primary-bg: #f8f9fa; --brand-color: #2563eb; --brand-gradient: linear-gradient(135deg, #2563eb 0%, #60a5fa 100%); --accent-color: #ffffff; --card-bg: #ffffff; --text-main: #1f2937; --text-muted: #6b7280; --border-color: #e5e7eb; --input-bg: #f3f4f6;
+        }
+
+        [data-theme="dark"] {
+            --primary-bg: #121212; --brand-color: #1e1e1e; --brand-gradient: linear-gradient(135deg, #1f2937 0%, #111827 100%); --accent-color: #3b82f6; --card-bg: #1f2937; --text-main: #f3f4f6; --text-muted: #9ca3af; --border-color: #374151; --input-bg: #374151;
+        }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
+        body { background-color: var(--primary-bg); color: var(--text-main); -webkit-tap-highlight-color: transparent; }
+
+        /* --- LOGIN SCREEN SPECIFIC STYLES --- */
+        #login-screen { 
+            display: flex; flex-direction: column; justify-content: center; align-items: center; 
+            min-height: 100vh; background: var(--brand-gradient); padding: 20px; 
+        }
+        .login-card { 
+            background: var(--card-bg); padding: 40px 30px; border-radius: 20px; 
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 100%; max-width: 380px; text-align: center; 
+        }
+        .login-logo { 
+            width: 70px; height: 70px; background-color: var(--brand-color); color: var(--accent-color); 
+            border-radius: 50%; display: flex; justify-content: center; align-items: center; 
+            font-size: 30px; margin: 0 auto 20px auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); 
+        }
+        .login-card h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+        .login-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 30px; }
+        .input-wrapper { position: relative; margin-bottom: 20px; }
+        .input-wrapper i { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .input-wrapper input { 
+            width: 100%; padding: 15px 15px 15px 45px; border: 1.5px solid var(--border-color); 
+            border-radius: 12px; font-size: 15px; outline: none; background-color: var(--input-bg); color: var(--text-main); 
+        }
+        .btn-login { 
+            width: 100%; padding: 15px; background-color: var(--brand-color); color: #fff; 
+            border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; 
+        }
+        .btn-login:disabled { background-color: #ccc; cursor: not-allowed; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. LOGIN SCREEN -->
+    <div id="login-screen">
+        <div class="login-card">
+            <div class="login-logo"><i class="fas fa-chart-line"></i></div>
+            <h2>SRI VISHNU PRIYA</h2>
+            <p>Finance Management System</p>
+            
+            <div class="input-wrapper">
+                <i class="fas fa-user"></i>
+                <input type="text" id="email" placeholder="Login ID (e.g. 002)" required>
+            </div>
+            
+            <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            
+            <button class="btn-login" id="loginBtn" onclick="handleLogin()">Secure Login</button>
+            <p id="error-message" style="color: var(--danger); font-size: 13px; margin-top: 15px; display: none; font-weight: 600;"></p>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+        // Mee Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAvjFcKKiu4OMmQckYXMTejdBJh9tC6TjM",
+            authDomain: "sri-vishnu-priya-finance-c591f.firebaseapp.com",
+            databaseURL: "https://sri-vishnu-priya-finance-c591f-default-rtdb.firebaseio.com",
+            projectId: "sri-vishnu-priya-finance-c591f",
+            storageBucket: "sri-vishnu-priya-finance-c591f.firebasestorage.app",
+            messagingSenderId: "184676228358",
+            appId: "1:184676228358:web:c2b32b68debeeadadfd287",
+            measurementId: "G-E3TT96ZH1T"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        // Window object ki attach chesthunnam
+        window.auth = auth;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+
+        // Auto-login logic: User already login ayi unte direct ga dashboard ki
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                window.location.href = "dashboard.html";
+            }
+        });
+    </script>
+
+    <!-- Custom Logic for Login -->
+    <script>
+        function handleLogin() {
+            let email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('error-message');
+            const loginBtn = document.getElementById('loginBtn');
+
+            if(!email || !password) { 
+                errorMsg.innerText = "Please enter Login ID and Password"; 
+                errorMsg.style.display = "block"; 
+                return; 
+            }
+            
+            // Auto Domain adding
+            if (!email.includes('@')) email = email + "@vpfc.com"; 
+
+            loginBtn.innerText = "Authenticating...";
+            loginBtn.disabled = true; // Button double click avvakunda
+            
+            // Firebase Auth Login Call
+            window.signInWithEmailAndPassword(window.auth, email, password)
+                .then(() => { 
+                    // Success aithe automatically onAuthStateChanged trigger ayi dashboard.html ki veltundi
+                })
+                .catch((error) => {
+                    loginBtn.innerText = "Secure Login";
+                    loginBtn.disabled = false;
+                    errorMsg.innerText = "Incorrect Login ID or Password!";
+                    errorMsg.style.display = "block";
+                });
+        }
+    </script>
+</body>
+</html>
