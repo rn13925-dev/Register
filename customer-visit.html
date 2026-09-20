@@ -55,12 +55,15 @@
         #loadingOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
         .loader-spinner { font-size: 40px; color: var(--brand-color); margin-bottom: 15px; }
 
-        /* Custom Radio for Yes/No Logic */
         .radio-options { display: flex; gap: 10px; margin-top: 5px; }
         .radio-options label { flex: 1; text-align: center; background: white; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-weight: 700; color: var(--brand-color); cursor: pointer; font-size: 13px; text-transform: none; }
         .radio-options input[type="radio"] { display: none; }
         .radio-options input[type="radio"]:checked + span { color: white; }
         .radio-options label:has(input:checked) { background: var(--brand-color); border-color: var(--brand-color); color: white; }
+
+        /* Kotha CSS for Dynamic Photos Block */
+        .dynamic-photo-block { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .dynamic-photo-block .file-upload { flex: 1; padding: 10px; }
     </style>
 </head>
 <body>
@@ -78,13 +81,11 @@
         <a href="dashboard.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
     </div>
 
-    <!-- STRICT LOADING GATEKEEPER -->
     <div id="attendanceLoader" style="text-align: center; padding: 40px 20px; font-weight: 700; color: var(--brand-color); font-size: 15px;">
         <i class="fas fa-shield-alt" style="font-size: 24px; margin-bottom:10px; display:block;"></i>
         Verifying Attendance Status...
     </div>
 
-    <!-- MAIN FORM (HIDDEN UNTIL VERIFIED) -->
     <div class="form-container" id="mainFormContainer" style="display: none;">
         
         <div class="section-title">Your Assigned Accounts <span id="monthDisplay"></span></div>
@@ -172,33 +173,31 @@
                 </div>
             </div>
 
-            <!-- DYNAMIC YES/NO QUESTION FOR QR/OP -->
+            <!-- YES/NO QUESTION FOR QR/OP -->
             <div class="input-group" id="houseVisitQnGroup" style="display: none; background: #fffbeb; padding:15px; border-radius:10px; border:1px solid #fde68a;">
                 <label style="color:#b45309; font-size:13px; text-transform:none;">Did you visit the customer's house?</label>
                 <div class="radio-options">
-                    <label><input type="radio" name="houseVisited" value="Yes" onchange="handleHouseVisit()"><span>Yes, Visited</span></label>
-                    <label><input type="radio" name="houseVisited" value="No" onchange="handleHouseVisit()"><span>No</span></label>
+                    <label><input type="radio" name="houseVisited" value="Yes" onclick="handleHouseVisit()"><span>Yes, Visited</span></label>
+                    <label><input type="radio" name="houseVisited" value="No" onclick="handleHouseVisit()"><span>No</span></label>
                 </div>
             </div>
             
-            <div class="input-group" id="receiptImgGroup">
+            <!-- REGULAR RECEIPT FOR PCR/LOCK -->
+            <div class="input-group" id="receiptImgGroup" style="display:none;">
                 <label id="receiptImgLabel">Payment Receipt Image</label>
                 <div class="file-upload">
-                    <!-- CAMERA ONLY FOR RECEIPTS -->
-                    <input type="file" id="imgReceipt" accept="image/*" capture="environment">
+                    <input type="file" id="imgReceipt" accept="image/*">
                     <i class="fas fa-camera"></i><span id="imgReceiptName">Take Receipt Photo</span>
                 </div>
             </div>
             
-            <div id="qrExtraFields" style="display: none;">
-                <div class="input-group">
-                    <label>Extra Screenshot 1</label>
-                    <input type="file" id="imgExtra1" accept="image/*" style="padding: 8px;">
-                </div>
-                <div class="input-group">
-                    <label>Extra Screenshot 2</label>
-                    <input type="file" id="imgExtra2" accept="image/*" style="padding: 8px;">
-                </div>
+            <!-- DYNAMIC RECEIPTS FOR QR/OP -->
+            <div id="dynamicReceiptsContainer" style="display: none; background: #e0f2fe; padding:15px; border-radius:10px; margin-bottom:15px; border:1px solid #bae6fd;">
+                <label style="color:var(--brand-color); font-weight:800; font-size:12px; margin-bottom:10px; display:block;"><i class="fas fa-images"></i> Attach Receipts (QR / OP)</label>
+                <div id="dynamicPhotosList"></div>
+                <button type="button" class="btn-submit" style="background:#0284c7; padding:10px; font-size:13px; margin-top:5px; box-shadow:none;" onclick="addDynamicPhoto()">
+                    <i class="fas fa-plus-circle"></i> Add Another Photo (+)
+                </button>
             </div>
         </div>
 
@@ -228,8 +227,7 @@
             <div class="input-group" id="grpCustomer" style="display:none;">
                 <label>Customer Photo (Mandatory)</label>
                 <div class="file-upload">
-                    <!-- CAMERA ONLY -->
-                    <input type="file" id="imgCustomer" accept="image/*" capture="environment">
+                    <input type="file" id="imgCustomer" accept="image/*">
                     <i class="fas fa-user-circle"></i><span id="imgCustomerName">Take Customer Photo</span>
                 </div>
             </div>
@@ -237,8 +235,7 @@
             <div class="input-group" id="grpHouse" style="display:none;">
                 <label>House / Vehicle Photo (Mandatory)</label>
                 <div class="file-upload">
-                    <!-- CAMERA ONLY -->
-                    <input type="file" id="imgHouse" accept="image/*" capture="environment">
+                    <input type="file" id="imgHouse" accept="image/*">
                     <i class="fas fa-home"></i><span id="imgHouseName">Take House/Vehicle Photo</span>
                 </div>
             </div>
@@ -246,8 +243,7 @@
             <div class="input-group" id="grpBike1" style="display:none;">
                 <label>Bike Photo 1 (Mandatory)</label>
                 <div class="file-upload">
-                    <!-- CAMERA ONLY -->
-                    <input type="file" id="imgBike1" accept="image/*" capture="environment">
+                    <input type="file" id="imgBike1" accept="image/*">
                     <i class="fas fa-motorcycle"></i><span id="imgBike1Name">Take Bike Photo 1</span>
                 </div>
             </div>
@@ -255,8 +251,7 @@
             <div class="input-group" id="grpBike2" style="display:none;">
                 <label>Bike Photo 2 (Mandatory)</label>
                 <div class="file-upload">
-                    <!-- CAMERA ONLY -->
-                    <input type="file" id="imgBike2" accept="image/*" capture="environment">
+                    <input type="file" id="imgBike2" accept="image/*">
                     <i class="fas fa-motorcycle"></i><span id="imgBike2Name">Take Bike Photo 2</span>
                 </div>
             </div>
@@ -295,23 +290,13 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
         
-        window.db = db;
-        window.storage = storage;
-        window.firebaseDbRef = ref;
-        window.firebaseDbGet = get;
-        window.firebaseDbChild = child;
-        window.firebaseDbSet = set;
-        window.firebaseDbPush = push;
-        window.firebaseDbUpdate = update; 
-        window.firebaseStorageRef = storageRef;
-        window.firebaseUploadBytes = uploadBytes;
-        window.firebaseGetDownloadURL = getDownloadURL;
+        window.db = db; window.storage = storage;
+        window.firebaseDbRef = ref; window.firebaseDbGet = get; window.firebaseDbChild = child;
+        window.firebaseDbSet = set; window.firebaseDbPush = push; window.firebaseDbUpdate = update; 
+        window.firebaseStorageRef = storageRef; window.firebaseUploadBytes = uploadBytes; window.firebaseGetDownloadURL = getDownloadURL;
         
-        window.currentEmpId = null;
-        window.currentEmpName = "";
-        window.currentBranch = "";
-        window.currentEmpMobile = "N/A";
-        window.selectedAccType = "Regular"; 
+        window.currentEmpId = null; window.currentEmpName = ""; window.currentBranch = "";
+        window.currentEmpMobile = "N/A"; window.selectedAccType = "Regular"; 
         
         const dateObj = new Date();
         const yyyy = dateObj.getFullYear();
@@ -325,28 +310,13 @@
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 window.currentEmpId = user.email.split('@')[0];
-
-                // === 🚨 STRICT ATTENDANCE GATEKEEPER 🚨 ===
                 try {
                     const attSnap = await get(child(ref(db), `attendance/${window.currentEmpId}/${window.currentYearMonth}/${window.currentDateOnly}`));
-                    
                     if (attSnap.exists()) {
                         const att = attSnap.val();
-                        if (!att.onlineTime || att.offlineTime) {
-                            alert("Please go online for duty.");
-                            window.location.replace("my-attendance.html");
-                            return; 
-                        }
-                    } else {
-                        alert("Please go online for duty.");
-                        window.location.replace("my-attendance.html");
-                        return; 
-                    }
-                } catch(e) {
-                    alert("Network error while checking attendance!");
-                    window.location.replace("dashboard.html");
-                    return;
-                }
+                        if (!att.onlineTime || att.offlineTime) { alert("Please go online for duty."); window.location.replace("my-attendance.html"); return; }
+                    } else { alert("Please go online for duty."); window.location.replace("my-attendance.html"); return; }
+                } catch(e) { alert("Network error while checking attendance!"); window.location.replace("dashboard.html"); return; }
 
                 document.getElementById('attendanceLoader').style.display = 'none';
                 document.getElementById('mainFormContainer').style.display = 'block';
@@ -362,9 +332,7 @@
                     }
                     loadAssignedAccounts();
                 } catch (error) { console.error(error); }
-            } else {
-                window.location.href = "index.html"; 
-            }
+            } else { window.location.href = "index.html"; }
         });
 
         async function loadAssignedAccounts() {
@@ -377,7 +345,6 @@
                     for(const hp in details) {
                         const amt = details[hp].amt || 0;
                         const type = details[hp].type || "Regular";
-                        
                         const chip = document.createElement('div');
                         chip.className = 'acc-chip';
                         chip.innerHTML = `<div class="acc-hp">${hp}</div><div class="acc-amt">₹${amt} (${type})</div>`;
@@ -393,9 +360,7 @@
         window.selectAccount = async function(hp, chipElement, accType) {
             document.querySelectorAll('.acc-chip').forEach(c => c.classList.remove('active'));
             if(chipElement) chipElement.classList.add('active');
-            
-            document.getElementById('hpNumber').value = hp;
-            window.selectedAccType = accType; 
+            document.getElementById('hpNumber').value = hp; window.selectedAccType = accType; 
             
             try {
                 const visitsSnap = await get(child(ref(db), `visits/${window.currentYearMonth}`));
@@ -403,10 +368,9 @@
                 if(visitsSnap.exists()) {
                     const visitsData = visitsSnap.val();
                     for(const vId in visitsData) {
-                        const v = visitsData[vId];
-                        if(v.hp === hp) {
-                            totalPaid += (parseInt(v.amt) || 0);
-                            latestType = v.type || "None"; 
+                        if(visitsData[vId].hp === hp) {
+                            totalPaid += (parseInt(visitsData[vId].amt) || 0);
+                            latestType = visitsData[vId].type || "None"; 
                         }
                     }
                 }
@@ -414,19 +378,28 @@
                 if(totalPaid > 0) {
                     balCard.style.display = 'block';
                     document.getElementById('oldBalanceText').innerText = `Total Paid this month: ₹${totalPaid} | Current Status: ${latestType}`;
-                } else {
-                    balCard.style.display = 'none';
-                }
+                } else { balCard.style.display = 'none'; }
             } catch(e) { console.error(e); }
         }
     </script>
 
     <script>
-        document.getElementById('imgReceipt').onchange = function() { document.getElementById('imgReceiptName').innerText = this.files[0] ? "Photo Captured ✓" : 'Take Receipt Photo'; document.getElementById('imgReceiptName').style.color = this.files[0] ? 'var(--success)' : 'var(--brand-color)';}
-        document.getElementById('imgCustomer').onchange = function() { document.getElementById('imgCustomerName').innerText = this.files[0] ? "Photo Captured ✓" : 'Take Customer Photo'; document.getElementById('imgCustomerName').style.color = this.files[0] ? 'var(--success)' : 'var(--brand-color)';}
-        document.getElementById('imgHouse').onchange = function() { document.getElementById('imgHouseName').innerText = this.files[0] ? "Photo Captured ✓" : 'Take House/Vehicle Photo'; document.getElementById('imgHouseName').style.color = this.files[0] ? 'var(--success)' : 'var(--brand-color)';}
-        document.getElementById('imgBike1').onchange = function() { document.getElementById('imgBike1Name').innerText = this.files[0] ? "Photo Captured ✓" : 'Take Bike Photo 1'; document.getElementById('imgBike1Name').style.color = this.files[0] ? 'var(--success)' : 'var(--brand-color)';}
-        document.getElementById('imgBike2').onchange = function() { document.getElementById('imgBike2Name').innerText = this.files[0] ? "Photo Captured ✓" : 'Take Bike Photo 2'; document.getElementById('imgBike2Name').style.color = this.files[0] ? 'var(--success)' : 'var(--brand-color)';}
+        // === PHOTO RESET LOGIC ===
+        let dynamicPhotoCount = 0;
+        
+        function resetAllPhotos() {
+            document.querySelectorAll('input[type="file"]').forEach(input => input.value = '');
+            const resetLabel = (id, text) => { const el = document.getElementById(id); if(el) { el.innerText = text; el.style.color = 'var(--brand-color)'; } };
+            
+            resetLabel('imgReceiptName', 'Take Receipt Photo');
+            resetLabel('imgCustomerName', 'Take Customer Photo');
+            resetLabel('imgHouseName', 'Take House/Vehicle Photo');
+            resetLabel('imgBike1Name', 'Take Bike Photo 1');
+            resetLabel('imgBike2Name', 'Take Bike Photo 2');
+            
+            document.getElementById('dynamicPhotosList').innerHTML = '';
+            dynamicPhotoCount = 0;
+        }
 
         function hideAllPhotos() {
             document.getElementById('grpCustomer').style.display = 'none';
@@ -435,68 +408,136 @@
             document.getElementById('grpBike2').style.display = 'none';
         }
 
+        // --- SINGLE PHOTO EVENTS ---
+        document.getElementById('imgReceipt').onchange = function() { updateLabel('imgReceipt', 'imgReceiptName', 'Take Receipt Photo'); }
+        document.getElementById('imgCustomer').onchange = function() { updateLabel('imgCustomer', 'imgCustomerName', 'Take Customer Photo'); }
+        document.getElementById('imgHouse').onchange = function() { updateLabel('imgHouse', 'imgHouseName', 'Take House/Vehicle Photo'); }
+        document.getElementById('imgBike1').onchange = function() { updateLabel('imgBike1', 'imgBike1Name', 'Take Bike Photo 1'); }
+        document.getElementById('imgBike2').onchange = function() { updateLabel('imgBike2', 'imgBike2Name', 'Take Bike Photo 2'); }
+        
+        function updateLabel(inputId, labelId, defaultText) {
+            const input = document.getElementById(inputId);
+            const label = document.getElementById(labelId);
+            if(input.files[0]) {
+                label.innerText = "Photo Captured ✓"; label.style.color = "var(--success)";
+            } else {
+                label.innerText = defaultText; label.style.color = "var(--brand-color)";
+            }
+        }
+
+        // === MASTER LOGIC (CAMERA ONLY CONTROLS) ===
+        function setCameraOnly(inputId, isCameraOnly) {
+            const el = document.getElementById(inputId);
+            if(!el) return;
+            if(isCameraOnly) el.setAttribute('capture', 'environment');
+            else el.removeAttribute('capture');
+        }
+
         function handleStatusChange() {
+            resetAllPhotos(); 
             const status = document.getElementById('visitStatus').value;
+            
             document.getElementById('paidSection').style.display = (status === 'PAID') ? 'block' : 'none';
             document.getElementById('notPaidSection').style.display = (status === 'NOT PAID') ? 'block' : 'none';
             document.getElementById('seizingSection').style.display = (status === 'SEIZING') ? 'block' : 'none';
-            
             document.getElementById('commonPhotos').style.display = (status !== '') ? 'block' : 'none';
             
             hideAllPhotos();
             document.getElementById('houseVisitQnGroup').style.display = 'none';
+            document.getElementById('dynamicReceiptsContainer').style.display = 'none';
             document.querySelectorAll('input[name="houseVisited"]').forEach(r => r.checked = false);
 
             if(status === 'PAID') {
                 handlePaymentMode();
             } else if (status === 'NOT PAID') {
-                // NOT PAID Needs Both Customer & House
-                document.getElementById('grpCustomer').style.display = 'block';
-                document.getElementById('grpHouse').style.display = 'block';
+                document.getElementById('grpCustomer').style.display = 'block'; setCameraOnly('imgCustomer', true);
+                document.getElementById('grpHouse').style.display = 'block'; setCameraOnly('imgHouse', true);
             } else if (status === 'SEIZING') {
-                // SEIZING Needs Only 2 Bike Photos
-                document.getElementById('grpBike1').style.display = 'block';
-                document.getElementById('grpBike2').style.display = 'block';
+                document.getElementById('grpBike1').style.display = 'block'; setCameraOnly('imgBike1', true);
+                document.getElementById('grpBike2').style.display = 'block'; setCameraOnly('imgBike2', true);
             }
         }
 
         function handlePaymentMode() {
+            resetAllPhotos(); 
+            // Option marchagane Radio buttons fresh ga reset avvali
+            document.querySelectorAll('input[name="houseVisited"]').forEach(r => r.checked = false);
+            
             const mode = document.getElementById('paymentMode').value;
             const lbl = document.getElementById('receiptImgLabel');
             
             document.getElementById('lockFields').style.display = 'none';
             document.getElementById('opFields').style.display = 'none';
-            document.getElementById('qrExtraFields').style.display = 'none';
-            document.getElementById('receiptImgGroup').style.display = 'block';
-            
+            document.getElementById('receiptImgGroup').style.display = 'none';
+            document.getElementById('dynamicReceiptsContainer').style.display = 'none';
             document.getElementById('houseVisitQnGroup').style.display = 'none';
             hideAllPhotos();
 
             if(mode === 'PCR' || mode === 'LOCK') {
+                document.getElementById('receiptImgGroup').style.display = 'block';
+                setCameraOnly('imgReceipt', true); // Only Camera
+                
                 if(mode === 'PCR') lbl.innerText = "PCR Receipt Image";
                 if(mode === 'LOCK') { lbl.innerText = "Lock Amount Proof"; document.getElementById('lockFields').style.display = 'block'; handlePPFC(); }
                 
-                // Compulsory Customer & House for PCR/Lock
-                document.getElementById('grpCustomer').style.display = 'block';
-                document.getElementById('grpHouse').style.display = 'block';
+                document.getElementById('grpCustomer').style.display = 'block'; setCameraOnly('imgCustomer', true);
+                document.getElementById('grpHouse').style.display = 'block'; setCameraOnly('imgHouse', true);
             } 
             else if(mode === 'QR' || mode === 'OP') {
-                if(mode === 'QR') { lbl.innerText = "QR Payment Screenshot"; document.getElementById('qrExtraFields').style.display = 'block'; }
-                if(mode === 'OP') { lbl.innerText = "OP Receipt Image"; document.getElementById('opFields').style.display = 'block'; }
+                if(mode === 'OP') { document.getElementById('opFields').style.display = 'block'; }
                 
-                // Show Dynamic Question
+                // Yes or No question opens freshly
                 document.getElementById('houseVisitQnGroup').style.display = 'block';
             }
         }
 
         window.handleHouseVisit = function() {
+            resetAllPhotos(); // Clean previous photos when toggling yes/no
             const visited = document.querySelector('input[name="houseVisited"]:checked');
-            if(visited && visited.value === 'Yes') {
-                document.getElementById('grpCustomer').style.display = 'block';
-                document.getElementById('grpHouse').style.display = 'block';
+            if(!visited) return;
+            
+            // Show dynamic photos container once option is clicked
+            document.getElementById('dynamicReceiptsContainer').style.display = 'block';
+            addDynamicPhoto(); // Add first dynamic input box automatically
+            
+            if(visited.value === 'Yes') {
+                document.getElementById('grpCustomer').style.display = 'block'; setCameraOnly('imgCustomer', true);
+                document.getElementById('grpHouse').style.display = 'block'; setCameraOnly('imgHouse', true);
             } else {
                 document.getElementById('grpCustomer').style.display = 'none';
                 document.getElementById('grpHouse').style.display = 'none';
+            }
+        }
+
+        // === DYNAMIC PHOTOS (UP TO 5) ===
+        window.addDynamicPhoto = function() {
+            if (dynamicPhotoCount >= 5) { alert("Maximum 5 photos allowed."); return; }
+            dynamicPhotoCount++;
+            
+            const container = document.getElementById('dynamicPhotosList');
+            const isVisited = document.querySelector('input[name="houseVisited"]:checked')?.value === 'Yes';
+            
+            // YES = Camera Only, NO = Camera + Gallery
+            const captureAttr = isVisited ? 'capture="environment"' : '';
+            
+            const html = `
+                <div class="dynamic-photo-block" id="dynPhotoGrp_${dynamicPhotoCount}">
+                    <div class="file-upload">
+                        <input type="file" id="dynImg_${dynamicPhotoCount}" accept="image/*" ${captureAttr} onchange="updateDynLabel(${dynamicPhotoCount})">
+                        <i class="fas fa-camera"></i><span id="dynLbl_${dynamicPhotoCount}">Take Receipt Photo ${dynamicPhotoCount}</span>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', html);
+        }
+
+        window.updateDynLabel = function(id) {
+            const fileInput = document.getElementById(`dynImg_${id}`);
+            const lbl = document.getElementById(`dynLbl_${id}`);
+            if(fileInput.files[0]) {
+                lbl.innerText = `Photo ${id} Captured ✓`; lbl.style.color = "var(--success)";
+            } else {
+                lbl.innerText = `Take Receipt Photo ${id}`; lbl.style.color = "var(--brand-color)";
             }
         }
 
@@ -505,7 +546,6 @@
             document.getElementById('ppfcReasonBox').style.display = (isEntered === 'No') ? 'block' : 'none';
         }
 
-        // Distance Formula (Haversine)
         function getDistanceKm(lat1, lon1, lat2, lon2) {
             if (!lat1 || !lon1 || !lat2 || !lon2) return 0;
             const R = 6371; 
@@ -515,7 +555,6 @@
             return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
         }
 
-        // Image Compressor
         async function compressImage(file, maxWidth = 800, maxHeight = 800, quality = 0.6) {
             return new Promise((resolve, reject) => {
                 if(!file) return resolve(null);
@@ -526,18 +565,11 @@
                     img.src = event.target.result;
                     img.onload = () => {
                         let width = img.width; let height = img.height;
-                        if (width > height) {
-                            if (width > maxWidth) { height = Math.round(height *= maxWidth / width); width = maxWidth; }
-                        } else {
-                            if (height > maxHeight) { width = Math.round(width *= maxHeight / height); height = maxHeight; }
-                        }
-                        const canvas = document.createElement('canvas');
-                        canvas.width = width; canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        canvas.toBlob((blob) => {
-                            resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() }));
-                        }, 'image/jpeg', quality);
+                        if (width > height) { if (width > maxWidth) { height = Math.round(height *= maxWidth / width); width = maxWidth; } } 
+                        else { if (height > maxHeight) { width = Math.round(width *= maxHeight / height); height = maxHeight; } }
+                        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => { resolve(new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() })); }, 'image/jpeg', quality);
                     };
                     img.onerror = (err) => reject(err);
                 };
@@ -552,19 +584,23 @@
             
             if(!hp || !status) { alert("Please select HP Number and Visit Status."); return; }
 
-            // 1. Validation Logic
             if (status === 'PAID') {
                 const mode = document.getElementById('paymentMode').value;
                 if(!document.getElementById('paidAmount').value) return alert("Enter Paid Amount");
-                if(!document.getElementById('imgReceipt').files[0]) return alert("Payment Receipt photo is mandatory!");
-
+                
                 if(mode === 'PCR' || mode === 'LOCK') {
+                    if(!document.getElementById('imgReceipt').files[0]) return alert("Payment Receipt photo is mandatory!");
                     if(!document.getElementById('imgCustomer').files[0] || !document.getElementById('imgHouse').files[0]) {
                         return alert("Customer Photo and House Photo are mandatory for PCR/Lock!");
                     }
                 } else if(mode === 'QR' || mode === 'OP') {
                     const visited = document.querySelector('input[name="houseVisited"]:checked');
                     if(!visited) return alert("Please answer if you visited the customer's house.");
+                    
+                    if(dynamicPhotoCount === 0 || !document.getElementById('dynImg_1').files[0]) {
+                        return alert("At least 1 Payment Receipt photo is mandatory!");
+                    }
+
                     if(visited.value === 'Yes') {
                         if(!document.getElementById('imgCustomer').files[0] || !document.getElementById('imgHouse').files[0]) {
                             return alert("Since you visited the house, Customer & House photos are mandatory!");
@@ -583,27 +619,16 @@
                 }
             }
 
-            // 2. STRICT GPS REQUIREMENT
             document.getElementById('loadingOverlay').style.display = 'flex';
             document.getElementById('loadingText').innerText = "Acquiring GPS Signal...";
 
             if ("geolocation" in navigator) {
                 navigator.geolocation.getCurrentPosition(
-                    async (position) => {
-                        const lat = position.coords.latitude;
-                        const lng = position.coords.longitude;
-                        const locStr = `${lat},${lng}`;
-                        await processAndUploadData(locStr, lat, lng);
-                    },
-                    async (error) => {
-                        document.getElementById('loadingOverlay').style.display = 'none';
-                        alert("🔴 GPS ERROR: Failed to get Live Location. Please enable GPS and Location Permissions to submit data.");
-                    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    async (position) => { await processAndUploadData(`${position.coords.latitude},${position.coords.longitude}`, position.coords.latitude, position.coords.longitude); },
+                    async (error) => { document.getElementById('loadingOverlay').style.display = 'none'; alert("🔴 GPS ERROR: Failed to get Live Location."); }, 
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
                 );
-            } else {
-                document.getElementById('loadingOverlay').style.display = 'none';
-                alert("🔴 GPS is not supported on this device.");
-            }
+            } else { document.getElementById('loadingOverlay').style.display = 'none'; alert("🔴 GPS is not supported on this device."); }
         }
 
         async function uploadImageFile(file, folderPath) {
@@ -614,14 +639,11 @@
                 const imgRef = window.firebaseStorageRef(window.storage, fileName);
                 await window.firebaseUploadBytes(imgRef, compressedFile);
                 return await window.firebaseGetDownloadURL(imgRef);
-            } catch (err) {
-                return "N/A";
-            }
+            } catch (err) { return "N/A"; }
         }
 
         async function processAndUploadData(locationString, vLat = 0, vLng = 0) {
             document.getElementById('loadingText').innerText = "Uploading Photos... Do not close";
-            
             try {
                 const hp = document.getElementById('hpNumber').value.trim().toUpperCase();
                 const status = document.getElementById('visitStatus').value;
@@ -635,96 +657,72 @@
                 document.getElementById('loadingText').innerText = "Saving Data...";
 
                 let visitData = {
-                    eid: window.currentEmpId,
-                    ename: window.currentEmpName,
-                    empMobile: window.currentEmpMobile,
-                    branch: window.currentBranch,
-                    hp: hp, 
-                    accType: window.selectedAccType, 
-                    cname: cname, 
-                    custMobile: cmobile, 
-                    vill: carea,
-                    stat: status, 
-                    loc: locationString,
-                    lat: vLat, 
-                    lng: vLng, 
-                    time: new Date().toLocaleTimeString(),
-                    date: window.currentDateOnly,
-                    timestamp: Date.now(),
-                    photoCust: urlCustomer, 
-                    photoHouse: urlHouse
+                    eid: window.currentEmpId, ename: window.currentEmpName, empMobile: window.currentEmpMobile, branch: window.currentBranch,
+                    hp: hp, accType: window.selectedAccType, cname: cname, custMobile: cmobile, vill: carea, stat: status, 
+                    loc: locationString, lat: vLat, lng: vLng, time: new Date().toLocaleTimeString(), date: window.currentDateOnly, timestamp: Date.now(),
+                    photoCust: urlCustomer, photoHouse: urlHouse
                 };
 
                 if(status === 'PAID') {
                     const pMode = document.getElementById('paymentMode').value;
                     visitData.type = pMode;
                     visitData.amt = document.getElementById('paidAmount').value;
-                    visitData.receiptUrl = await uploadImageFile(document.getElementById('imgReceipt').files[0], 'visits/receipts');
                     
                     const visited = document.querySelector('input[name="houseVisited"]:checked');
                     if(visited) visitData.houseVisited = visited.value;
 
-                    if(pMode === 'LOCK') {
-                        visitData.ppfc = document.getElementById('ppfcEntered').value;
-                        if(visitData.ppfc === 'No') visitData.ppfcRsn = document.getElementById('ppfcReason').value;
+                    if(pMode === 'PCR' || pMode === 'LOCK') {
+                        visitData.receiptUrl = await uploadImageFile(document.getElementById('imgReceipt').files[0], 'visits/receipts');
+                        if(pMode === 'LOCK') {
+                            visitData.ppfc = document.getElementById('ppfcEntered').value;
+                            if(visitData.ppfc === 'No') visitData.ppfcRsn = document.getElementById('ppfcReason').value;
+                        }
                     }
-                    else if(pMode === 'QR') {
-                        visitData.exImg1 = await uploadImageFile(document.getElementById('imgExtra1').files[0], 'visits/receipts');
-                        visitData.exImg2 = await uploadImageFile(document.getElementById('imgExtra2').files[0], 'visits/receipts');
-                    }
-                    else if(pMode === 'OP') {
-                        visitData.opTo = document.getElementById('opPerson').value;
-                        visitData.opReceipt = document.getElementById('opReceiptGiven').value;
+                    else if(pMode === 'QR' || pMode === 'OP') {
+                        // Upload multiple dynamic photos
+                        let dynUrls = [];
+                        for(let i=1; i<=dynamicPhotoCount; i++) {
+                            const dynFile = document.getElementById(`dynImg_${i}`)?.files[0];
+                            if(dynFile) {
+                                const url = await uploadImageFile(dynFile, 'visits/receipts');
+                                if(url !== "N/A") dynUrls.push(url);
+                            }
+                        }
+                        visitData.dynReceipts = dynUrls;
+                        
+                        if(pMode === 'OP') {
+                            visitData.opTo = document.getElementById('opPerson').value;
+                            visitData.opReceipt = document.getElementById('opReceiptGiven').value;
+                        }
                     }
                 } 
                 else if (status === 'NOT PAID') {
-                    visitData.type = "NOT PAID";
-                    visitData.unr = document.getElementById('notPaidReason').value;
-                    visitData.next = document.getElementById('promisedDate').value;
+                    visitData.type = "NOT PAID"; visitData.unr = document.getElementById('notPaidReason').value; visitData.next = document.getElementById('promisedDate').value;
                 } 
                 else if (status === 'SEIZING') {
-                    visitData.type = "SEIZING";
-                    visitData.seizeRsn = document.getElementById('seizeReason').value;
+                    visitData.type = "SEIZING"; visitData.seizeRsn = document.getElementById('seizeReason').value;
                     visitData.bike1Url = await uploadImageFile(document.getElementById('imgBike1').files[0], 'visits/bikes');
                     visitData.bike2Url = await uploadImageFile(document.getElementById('imgBike2').files[0], 'visits/bikes');
                 }
 
-                // 1. Save Visit Data
                 const dbRef = window.firebaseDbRef(window.db, `visits/${window.currentYearMonth}`);
                 const newVisitRef = window.firebaseDbPush(dbRef);
                 await window.firebaseDbSet(newVisitRef, visitData);
                 
-                // 2. KILOMETER TRACKING UPDATE LOGIC
                 if (vLat !== 0 && vLng !== 0) {
                     try {
-                        const attRefPath = `attendance/${window.currentEmpId}/${window.currentYearMonth}/${window.currentDateOnly}`;
-                        const attRef = window.firebaseDbRef(window.db, attRefPath);
+                        const attRef = window.firebaseDbRef(window.db, `attendance/${window.currentEmpId}/${window.currentYearMonth}/${window.currentDateOnly}`);
                         const attSnap = await window.firebaseDbGet(attRef);
-                        
                         if (attSnap.exists()) {
                             const attData = attSnap.val();
-                            let prevLat = parseFloat(attData.lastLat || attData.startLat);
-                            let prevLng = parseFloat(attData.lastLng || attData.startLng);
+                            let prevLat = parseFloat(attData.lastLat || attData.startLat); let prevLng = parseFloat(attData.lastLng || attData.startLng);
                             let currentKm = parseFloat(attData.totalKm || 0);
-                            
-                            if (!isNaN(prevLat) && !isNaN(prevLng)) {
-                                let addedKm = getDistanceKm(prevLat, prevLng, vLat, vLng);
-                                currentKm += addedKm;
-                            }
-                            
-                            await window.firebaseDbUpdate(attRef, {
-                                totalKm: parseFloat(currentKm.toFixed(2)),
-                                distanceKm: parseFloat(currentKm.toFixed(2)),
-                                lastLat: vLat,
-                                lastLng: vLng
-                            });
+                            if (!isNaN(prevLat) && !isNaN(prevLng)) currentKm += getDistanceKm(prevLat, prevLng, vLat, vLng);
+                            await window.firebaseDbUpdate(attRef, { totalKm: parseFloat(currentKm.toFixed(2)), distanceKm: parseFloat(currentKm.toFixed(2)), lastLat: vLat, lastLng: vLng });
                         }
-                    } catch(err) {
-                        console.error("Distance tracking error:", err);
-                    }
+                    } catch(err) { console.error(err); }
                 }
 
-                // 3. Send Telegram Notification
                 document.getElementById('loadingText').innerText = "Sending Notifications...";
                 await sendToTelegram(visitData);
 
@@ -732,26 +730,15 @@
                 alert("Visit Data Submitted Successfully!");
                 window.location.reload();
 
-            } catch (error) {
-                console.error(error);
-                document.getElementById('loadingOverlay').style.display = 'none';
-                alert("Error submitting data. Please try again.");
-            }
+            } catch (error) { console.error(error); document.getElementById('loadingOverlay').style.display = 'none'; alert("Error submitting data."); }
         }
 
-        // --- TELEGRAM MESSAGE LOGIC ---
         async function sendToTelegram(data) {
             try {
                 const dbRef = window.firebaseDbRef(window.db);
-                let token = null;
-                let targetChatIds = new Set(); 
-
+                let token = null; let targetChatIds = new Set(); 
                 const adminSnap = await window.firebaseDbGet(window.firebaseDbChild(dbRef, `adminSettings`));
-                if (adminSnap.exists()) {
-                    token = adminSnap.val().telegramBotToken;
-                    if (adminSnap.val().adminChatId) targetChatIds.add(adminSnap.val().adminChatId);
-                }
-
+                if (adminSnap.exists()) { token = adminSnap.val().telegramBotToken; if (adminSnap.val().adminChatId) targetChatIds.add(adminSnap.val().adminChatId); }
                 if (!token) return; 
 
                 if (data.branch && data.branch !== "N/A") {
@@ -759,60 +746,28 @@
                     if (branchesSnap.exists()) {
                         const branchesData = branchesSnap.val();
                         for (const key in branchesData) {
-                            if (branchesData[key].name === data.branch) {
-                                if (branchesData[key].chatId && branchesData[key].chatId.trim() !== "") {
-                                    targetChatIds.add(branchesData[key].chatId.trim());
-                                }
-                                break; 
-                            }
+                            if (branchesData[key].name === data.branch && branchesData[key].chatId) { targetChatIds.add(branchesData[key].chatId.trim()); break; }
                         }
                     }
                 }
 
                 if (targetChatIds.size > 0) {
-                    let msg = `🚨 *New Customer Visit*\n\n`;
-                    msg += `👤 *Agent:* ${data.ename} (ID: ${data.eid})\n`;
-                    msg += `📱 *Agent Ph:* ${data.empMobile}\n`; 
-                    msg += `🏦 *Branch:* ${data.branch}\n`;
-                    msg += `📝 *HP No:* ${data.hp} (*${data.accType}*)\n`; 
-                    msg += `👤 *Customer Name:* ${data.cname || 'N/A'}\n`;
-                    msg += `📞 *Cust Mobile:* ${data.custMobile || 'N/A'}\n`; 
+                    let msg = `🚨 *New Customer Visit*\n\n👤 *Agent:* ${data.ename} (ID: ${data.eid})\n📱 *Agent Ph:* ${data.empMobile}\n🏦 *Branch:* ${data.branch}\n📝 *HP No:* ${data.hp} (*${data.accType}*)\n👤 *Customer Name:* ${data.cname || 'N/A'}\n📞 *Cust Mobile:* ${data.custMobile || 'N/A'}\n`; 
                     
-                    if(data.stat === 'PAID') {
-                        msg += `\n🟢 *Status:* PAID\n`;
-                        msg += `💰 *Amount:* ₹${data.amt}\n`;
-                        msg += `💳 *Mode:* ${data.type}\n`;
-                    } else if(data.stat === 'NOT PAID') {
-                        msg += `\n🔴 *Status:* NOT PAID\n`;
-                        msg += `🛑 *Reason:* ${data.unr || 'N/A'}\n`; 
-                        msg += `📅 *Next Date:* ${data.next || 'N/A'}\n`; 
-                    } else if(data.stat === 'SEIZING') {
-                        msg += `\n🟠 *Status:* SEIZING\n`;
-                        msg += `🛑 *Remarks:* ${data.seizeRsn || 'N/A'}\n`;
-                    }
+                    if(data.stat === 'PAID') { msg += `\n🟢 *Status:* PAID\n💰 *Amount:* ₹${data.amt}\n💳 *Mode:* ${data.type}\n`; } 
+                    else if(data.stat === 'NOT PAID') { msg += `\n🔴 *Status:* NOT PAID\n🛑 *Reason:* ${data.unr || 'N/A'}\n📅 *Next Date:* ${data.next || 'N/A'}\n`; } 
+                    else if(data.stat === 'SEIZING') { msg += `\n🟠 *Status:* SEIZING\n🛑 *Remarks:* ${data.seizeRsn || 'N/A'}\n`; }
                     
-                    msg += `\n📍 *Location:* [View Map](https://maps.google.com/?q=${data.loc})\n`;
-                    msg += `\n📸 *PROOFS:*`;
+                    msg += `\n📍 *Location:* [View Map](https://maps.google.com/?q=${data.loc})\n\n📸 *PROOFS:*`;
                     if (data.photoCust && data.photoCust !== "N/A") msg += `\n[👤 Customer Photo](${data.photoCust})`;
                     if (data.photoHouse && data.photoHouse !== "N/A") msg += `\n[🏠 House Photo](${data.photoHouse})`;
                     if (data.receiptUrl && data.receiptUrl !== "N/A") msg += `\n[🧾 Payment Receipt](${data.receiptUrl})`;
+                    if (data.dynReceipts && data.dynReceipts.length > 0) { data.dynReceipts.forEach((url, idx) => { msg += `\n[🧾 QR/OP Receipt ${idx+1}](${url})`; }); }
 
                     const tgUrl = `https://api.telegram.org/bot${token}/sendMessage`;
-
-                    for (const chatId of targetChatIds) {
-                        await fetch(tgUrl, {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({ 
-                                chat_id: chatId, 
-                                text: msg, 
-                                parse_mode: "Markdown",
-                                disable_web_page_preview: false 
-                            })
-                        });
-                    }
+                    for (const chatId of targetChatIds) { await fetch(tgUrl, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: "Markdown", disable_web_page_preview: false }) }); }
                 }
-            } catch(e) { console.log("Telegram Error", e); }
+            } catch(e) {}
         }
     </script>
 </body>
